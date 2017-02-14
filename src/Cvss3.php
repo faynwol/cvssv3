@@ -23,11 +23,6 @@
  * @package CVSSv3
  */
 
-namespace SecurityDatabase\Cvss;
-
-use ResourceBundle;
-use ReflectionClass;
-use Exception;
 
 class Cvss3
 {
@@ -37,11 +32,6 @@ class Cvss3
      * @var string
      */
     private static $vector_head = "CVSS:3.0";
-
-    /**
-     * @var string
-     */
-    private $lang = "en_US";
 
     /**
      * @var array
@@ -54,22 +44,14 @@ class Cvss3
     /**
      * @var array
      */
-    private $sub_scoresLabel = array();
-    /**
-     * @var array
-     */
     private $scores = array("baseScore" => "NA",
                             "impactSubScore" => "NA",
                             "exploitabalitySubScore" => "NA",
-                            "temporalScore" => "NA",
+                            "tempScore" => "NA",
                             "envScore" => "NA",
                             "envModifiedImpactSubScore" => "NA",
                             "overallScore" => "NA"
     );
-    /**
-     * @var array
-     */
-    private $scoresLabel = array();
     /**
      * @var array
      */
@@ -86,10 +68,6 @@ class Cvss3
      * @var array
      */
     private $vector_input_array = array();
-    /**
-     * @var array
-     */
-    private $vector_inputLabel_array = array();
     /**
      * @var array
      */
@@ -269,27 +247,6 @@ class Cvss3
     );
 
     /**
-     * Cvss3 constructor.
-     * @throws Exception
-     */
-    public function __construct()
-    {
-        if (!isset($this->lang)) {
-            throw new Exception('Locale is not set', __LINE__);
-        }
-
-        if (array_search($this->lang, ResourceBundle::getLocales('')) === false) {
-            throw new Exception('Not a valid locale', __LINE__);
-        }
-
-        if (is_file(__DIR__ . '/Cvss3.' . self::getLocale() . '.php') === false) {
-            throw new Exception('Traduction file does not exist', __LINE__);
-        } else {
-            include_once(__DIR__ . '/Cvss3.' . self::getLocale() . '.php');
-        }
-    }
-
-    /**
      * @param string $vector
      * @throws Exception
      */
@@ -309,7 +266,6 @@ class Cvss3
         self::constructWeights();
         self::calculate();
         self::constructVector();
-        self::buildLanguage();
     }
 
     /**
@@ -318,35 +274,6 @@ class Cvss3
     public function getVectorHead()
     {
         return self::$vector_head;
-    }
-
-    /**
-     * @return string
-     */
-    public function getLocale()
-    {
-        return $this->lang;
-    }
-
-    /**
-     * @param string $lang
-     * @return bool
-     * @throws Exception
-     */
-    public function setLocale($lang)
-    {
-
-        if (!isset($lang)) {
-            throw new Exception('Locale is not set', __LINE__);
-        }
-
-        if (array_search($lang, ResourceBundle::getLocales('')) === false) {
-            throw new Exception('Not a valid locale', __LINE__);
-        }
-
-        $this->lang = $lang;
-
-        return true;
     }
 
     /**
@@ -368,25 +295,9 @@ class Cvss3
     /**
      * @return array
      */
-    public function getSubScoresLabel()
-    {
-        return $this->sub_scoresLabel;
-    }
-
-    /**
-     * @return array
-     */
     public function getScores()
     {
         return $this->scores;
-    }
-
-    /**
-     * @return array
-     */
-    public function getScoresLabel()
-    {
-        return $this->scoresLabel;
     }
 
     /**
@@ -419,14 +330,6 @@ class Cvss3
     public function getVectorInputArray()
     {
         return $this->vector_input_array;
-    }
-
-    /**
-     * @return array
-     */
-    public function getVectorInputLabelArray()
-    {
-        return $this->vector_inputLabel_array;
     }
 
     /**
@@ -550,18 +453,14 @@ class Cvss3
     {
         //Mandatory
         foreach ($this->vector_input_array as $metric => $value) {
-            if ($metric == "PR") {
-                if ($this->vector_input_array["S"] == "C" && ($value == "L" || $value == "H")) {
+            if ($metric == "PR" && ($value == "L" || $value == "H")) {
+                if ($this->vector_input_array["S"] == "C") {
                     if (isset(self::$metrics_level_mandatory[$metric][$value])) {
                         $this->weight[$metric] = (float)self::$metrics_level_mandatory[$metric][$value]["Scope"];
                     }
-                } elseif ($this->vector_input_array["S"] == "U" && ($value == "L" || $value == "H")) {
+                } elseif ($this->vector_input_array["S"] == "U") {
                     if (isset(self::$metrics_level_mandatory[$metric][$value])) {
                         $this->weight[$metric] = (float)self::$metrics_level_mandatory[$metric][$value]["Default"];
-                    }
-                } else {
-                    if (isset(self::$metrics_level_mandatory[$metric][$value])) {
-                        $this->weight[$metric] = (float)self::$metrics_level_mandatory[$metric][$value];
                     }
                 }
             } else {
@@ -713,12 +612,12 @@ class Cvss3
          * Temporal score
          */
 
-        $this->sub_scores["temporalScore"] = self::roundUp(
+        $this->sub_scores["tempScore"] = self::roundUp(
             $this->sub_scores["baseScore"] * $this->weight["E"] * $this->weight["RL"] * $this->weight["RC"],
             1
         );
 
-        $this->formula["temporalScore"] = "roundUp( " . $this->sub_scores["baseScore"] . " * " . $this->weight["E"]
+        $this->formula["tempScore"] = "roundUp( " . $this->sub_scores["baseScore"] . " * " . $this->weight["E"]
             . " * " . $this->weight["RL"] . " * " . $this->weight["RC"] . ")";
 
         /**
@@ -829,7 +728,7 @@ class Cvss3
                 1
             );
 
-            $this->formula["envScore"] = "roundUp(self::roundUp(min(10 , 1.08 * (" . $this->sub_scores["envModifiedImpactSubScore"]
+            $this->formula["envScore"] = "roundUp(roundUp(min(10 , 1.08 * (" . $this->sub_scores["envModifiedImpactSubScore"]
                 . " + " . $this->sub_scores["envModifiedExploitabalitySubScore"] . " ),1) * " . $this->weight["E"]
                 . " * " . $this->weight["RL"] . " * " . $this->weight["RC"] . ",1)";
         }
@@ -850,9 +749,9 @@ class Cvss3
 
 
         foreach (self::$tmp as $k => $v) {
-            $this->scores["temporalScore"] = round($this->sub_scores["temporalScore"], 1);
+            $this->scores["tempScore"] = round($this->sub_scores["tempScore"], 1);
             if (isset($this->vector_input_array[$v])) {
-                $this->scores["overallScore"] = round($this->sub_scores["temporalScore"], 1);
+                $this->scores["overallScore"] = round($this->sub_scores["tempScore"], 1);
             }
         }
 
@@ -865,34 +764,6 @@ class Cvss3
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    private function buildLanguage()
-    {
-
-        foreach ($this->scores as $key => $value) {
-            if (defined("CVSSV3_" . $key)) {
-                $this->scoresLabel[constant("CVSSV3_" . $key)] = $value;
-            } else {
-                throw new Exception('Error in Cvss v3 vector definition', __LINE__);
-            }
-        }
-        foreach ($this->sub_scores as $key => $value) {
-            if (defined("CVSSV3_" . $key)) {
-                $this->sub_scoresLabel[constant("CVSSV3_" . $key)] = $value;
-            } else {
-                throw new Exception('Error in Cvss v3 vector definition', __LINE__);
-            }
-        }
-        foreach ($this->vector_input_array as $key => $value) {
-            if (defined("CVSSV3_" . $key."_".$value) && constant("CVSSV3_" . $key . "_" . $value)) {
-                $this->vector_inputLabel_array[constant("CVSSV3_" . $key)] = constant("CVSSV3_" . $key . "_" . $value);
-            } else {
-                throw new Exception('Error in Cvss v3 vector definition', __LINE__);
-            }
-        }
-    }
     /**
      *
      */

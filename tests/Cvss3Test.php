@@ -1,6 +1,6 @@
 <?php
 
-use SecurityDatabase\Cvss\Cvss3;
+require_once dirname(__DIR__) . '/src/Cvss3.php';
 
 class Cvss3Test extends PHPUnit_Framework_TestCase {
 
@@ -52,7 +52,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $this->assertArrayHasKey("impactSubScore", $cvss->getSubScores());
         $this->assertArrayHasKey("exploitabalitySubScore", $cvss->getSubScores());
         $this->assertArrayHasKey("baseScore", $cvss->getSubScores());
-        $this->assertArrayHasKey("temporalScore", $cvss->getSubScores());
+        $this->assertArrayHasKey("tempScore", $cvss->getSubScores());
         $this->assertArrayHasKey("envModifiedExploitabalitySubScore", $cvss->getSubScores());
         $this->assertArrayHasKey("envImpactSubScoreMultiplier", $cvss->getSubScores());
         $this->assertArrayHasKey("envModifiedImpactSubScore", $cvss->getSubScores());
@@ -67,7 +67,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $this->assertArrayHasKey("baseScore", $cvss->getScores());
         $this->assertArrayHasKey("impactSubScore", $cvss->getScores());
         $this->assertArrayHasKey("exploitabalitySubScore", $cvss->getScores());
-        $this->assertArrayHasKey("temporalScore", $cvss->getScores());
+        $this->assertArrayHasKey("tempScore", $cvss->getScores());
         $this->assertArrayHasKey("envScore", $cvss->getScores());
         $this->assertArrayHasKey("envModifiedImpactSubScore", $cvss->getScores());
         $this->assertArrayHasKey("overallScore", $cvss->getScores());
@@ -82,7 +82,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $this->assertArrayHasKey("impactSubScore", $cvss->getFormula());
         $this->assertArrayHasKey("exploitabalitySubScore", $cvss->getFormula());
         $this->assertArrayHasKey("baseScore", $cvss->getFormula());
-        $this->assertArrayHasKey("temporalScore", $cvss->getFormula());
+        $this->assertArrayHasKey("tempScore", $cvss->getFormula());
         $this->assertArrayHasKey("envModifiedExploitabalitySubScore", $cvss->getFormula());
         $this->assertArrayHasKey("envImpactSubScoreMultiplier", $cvss->getFormula());
         $this->assertArrayHasKey("envModifiedImpactSubScore", $cvss->getFormula());
@@ -96,7 +96,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $cvss = new Cvss3;
         $cvss->register($vector);
         $this->assertTrue( 9.0 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 9.0 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 9.0 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 5.9 === (float)$cvss->getScores()["envScore"]);
 
     }
@@ -107,7 +107,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $cvss = new Cvss3;
         $cvss->register($vector);
         $this->assertTrue( 8.4 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 8.0 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 8.0 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 7.0 === (float)$cvss->getScores()["envScore"]);
 
     }
@@ -118,7 +118,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $cvss = new Cvss3;
         $cvss->register($vector);
         $this->assertTrue( 8.4 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 8.0 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 8.0 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 6.0 === (float)$cvss->getScores()["envScore"]);
 
     }
@@ -129,7 +129,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $cvss = new Cvss3;
         $cvss->register($vector);
         $this->assertTrue( 8.0 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 7.2 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 7.2 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 7.0 === (float)$cvss->getScores()["envScore"]);
 
     }
@@ -140,7 +140,7 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $cvss = new Cvss3;
         $cvss->register($vector);
         $this->assertTrue( 8.0 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 6.6 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 6.6 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 7.1 === (float)$cvss->getScores()["envScore"]);
 
     }
@@ -150,47 +150,11 @@ class Cvss3Test extends PHPUnit_Framework_TestCase {
         $vector = "CVSS:3.0/AV:A/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H/MAC:H/MPR:H/MUI:R/MC:L/MI:N";
         $cvss = new Cvss3;
         $cvss->register($vector);
+        print_r($cvss->getScores());
+        // print_r($cvss->getFormula());
         $this->assertTrue( 8.0 === (float)$cvss->getScores()["baseScore"]);
-        $this->assertTrue( 8.0 === (float)$cvss->getScores()["temporalScore"]);
+        $this->assertTrue( 8.0 === (float)$cvss->getScores()["tempScore"]);
         $this->assertTrue( 4.6 === (float)$cvss->getScores()["envScore"]);
 
-    }
-
-
-
-    /**
-     * @expectedException Exception
-     *
-     */
-    public function testRegisterNull()
-    {
-        $cvss = new Cvss3;
-        $cvss->register('');
-    }
-
-    /**
-     * @expectedException Exception
-     *
-     */
-    public function testRegisterWithoutHead()
-    {
-        $vector = "AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H/E:H/RL:U/RC:C/CR:H/IR:H/AR:H/MAV:N/MAC:H/MPR:L/MUI:R/MS:C/MC:L/MI:L/MA:N";
-        $cvss = new Cvss3;
-        $cvss->register($vector);
-    }
-
-    /**
-     * @expectedException Exception
-     */
-    public function testLangNull()
-    {
-        $cvss = new Cvss3;
-        $this->assertTrue($cvss->setLocale('') == true);
-    }
-
-    public function testLang()
-    {
-        $cvss = new Cvss3;
-        $this->assertTrue($cvss->setLocale('en_US') == true);
     }
 }
